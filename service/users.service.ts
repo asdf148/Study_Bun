@@ -1,25 +1,48 @@
 import { UserModel } from "../database/models/user.model";
 import { JoinDTO } from "../dto/join.dto";
+import { LoginDTO } from "../dto/login.dto";
 import { UserRepository } from "../repository/users.repository";
-// import { hash } from "bcrypt";
-import { getHashes } from "crypto";
-import { hash } from "bun";
+import { Encryption } from "../util/encryption";
 
 export class UsersService {
   private readonly userRepository: UserRepository;
+  private readonly encryption: Encryption;
 
-  constructor(userRepository: UserRepository) {
+  constructor(userRepository: UserRepository, encryption: Encryption) {
     this.userRepository = userRepository;
+    this.encryption = encryption;
   }
 
-  public join(userData: JoinDTO): Boolean {
-    userData.password = String(hash(userData.password, 12));
+  public findOneUserById(user_id: number) {
+    return this.userRepository.findOneById(user_id);
+  }
+
+  public async join(userData: JoinDTO): Promise<Boolean> {
+    const { password, salt } = await this.encryption.createHashedPassword(
+      userData.password
+    );
+
     return this.userRepository.create(
       new UserModel({
         name: userData.name,
         email: userData.email,
-        password: userData.password,
+        password: password,
+        salt: salt,
       })
     );
+  }
+
+  public async login(userData: LoginDTO): Promise<Boolean> {
+    const user: UserModel | null = this.userRepository.findOneByEmail(
+      userData.email
+    );
+    if (!user) {
+      return false;
+    }
+    const hashedPassword: string = await this.encryption.makePasswordHashed(
+      user.salt,
+      userData.password
+    );
+    return user.password == hashedPassword ? true : false;
   }
 }
