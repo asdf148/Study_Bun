@@ -6,6 +6,8 @@
     "bun-types": "^0.1.0"
   },
   "dependencies": {
-    "@kapsonfire/bun-bakery": "^0.3.0"
+    "@kapsonfire/bun-bakery": "^0.3.0",
+    "@types/jsonwebtoken": "^8.5.9",
+    "jsonwebtoken": "^8.5.1"
   }
 }
